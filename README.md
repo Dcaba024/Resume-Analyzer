@@ -1,41 +1,71 @@
-<<<<<<< HEAD
-# Resume-Analyzer
-A resume Analyzer that uses OPENAi gpt to analyze resumes and give feedback 
-=======
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Resume Analyzer 🧠📄
 
-## Getting Started
+An AI-powered tool that analyzes your resume against a job description and gives you:
 
-First, run the development server:
+- ✅ A match score
+- 🛠 Suggestions to improve your resume
+- 🔍 Missing keywords you should include
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Built with **Next.js**, **Zustand**, **Tailwind CSS**, and **PDF.js**.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ✨ Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Upload your resume (PDF)
+- Paste a job description
+- Get instant AI-powered analysis (mocked in demo mode)
+- Fully responsive, clean UI
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 📸 Demo
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+![screenshot](public/demo.png) <!-- Replace with your own screenshot or Loom video -->
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+🔗 Live demo: [resume-analyzer.vercel.app](https://resume-analyzer.vercel.app)
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛠 Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
->>>>>>> 1304019 (Initial commit from Create Next App)
+- [Next.js 15 (App Router)](https://nextjs.org)
+- [Tailwind CSS](https://tailwindcss.com)
+- [Zustand](https://github.com/pmndrs/zustand)
+- [OpenAI API](https://platform.openai.com) *(optional / mocked)*
+- [PDF.js](https://mozilla.github.io/pdf.js/)
+
+---
+
+## 💡 How It Works
+
+1. User uploads a resume (PDF is parsed in browser)
+2. User pastes a job listing
+3. App sends both to an API route
+4. (In real mode) OpenAI GPT analyzes and returns a score + feedback
+5. (In demo mode) Returns a fake but realistic response
+
+---
+
+## 🚀 Deployment
+
+This app is live and deployed on [Vercel](https://vercel.com):
+
+> 🔗 [resume-analyzer.vercel.app](https://resume-analyzer.vercel.app)
+
+---
+
+## 🔒 Note on AI Integration
+
+This version runs in **mock mode** to avoid API usage costs.  
+To use real GPT-4 or GPT-3.5:
+
+1. Add your OpenAI key to `.env.local`
+2. Uncomment the OpenAI call in `app/api/analyze/route.ts`
+
+---
+
+## 📬 Contact
+
+Made with ❤️ by [Dylan Caballero](https://www.linkedin.com/in/dcaba024/)
+
