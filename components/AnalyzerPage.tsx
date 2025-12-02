@@ -38,6 +38,10 @@ export default async function AnalyzerPage() {
   const membershipExpiresAt = accessInfo?.membershipExpiresAt ?? null;
   const membershipActive = hasActiveMembership(accessInfo);
   const canAnalyze = credits > 0 || membershipActive;
+  const fullName = [accessInfo?.firstName, accessInfo?.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
   const membershipLabel = getMembershipLabel(membershipPlan);
   const statusLabel = membershipActive
     ? membershipPlan === "lifetime"
@@ -110,7 +114,7 @@ export default async function AnalyzerPage() {
         <div className="w-full space-y-8 rounded-2xl border border-gray-800 bg-gray-900/80 p-6 shadow-lg">
           <ResumeUpload />
           <JobDescriptionInput />
-          <AnalyzeButton />
+          <AnalyzeButton fullName={fullName || null} />
         </div>
       </div>
     </main>

@@ -80,7 +80,7 @@ function buildProfileData(profile?: UserProfileFields) {
 export async function createUserWithPassword(
   email: string,
   hashedPassword: string,
-  credits = 1,
+  credits = 0,
   profile?: UserProfileFields
 ) {
   return prisma.userCredit.create({

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { ensureUserWithCredits, updateUserProfile } from "@/lib/db";
 import { USER_COOKIE_KEY } from "@/lib/auth";
+import { resolveGoogleRedirectUri } from "@/lib/google";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI;
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
 export async function GET(request: Request) {
@@ -17,13 +17,14 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/signin?error=google", request.url));
   }
 
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REDIRECT_URI) {
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
     return NextResponse.json(
       { error: "Google OAuth not configured." },
       { status: 500 }
     );
   }
 
+  const redirectUri = resolveGoogleRedirectUri(url);
   const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: {
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
       code,
       client_id: GOOGLE_CLIENT_ID,
       client_secret: GOOGLE_CLIENT_SECRET,
-      redirect_uri: GOOGLE_REDIRECT_URI,
+      redirect_uri: redirectUri,
       grant_type: "authorization_code",
     }),
   });
@@ -81,7 +82,7 @@ export async function GET(request: Request) {
     );
   }
 
-  await ensureUserWithCredits(email, 5);
+  await ensureUserWithCredits(email, 0);
   await updateUserProfile(email, {
     firstName: firstName ?? null,
     lastName: lastName ?? null,
