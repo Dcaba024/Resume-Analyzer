@@ -1,19 +1,10 @@
 import Link from "next/link";
-import ResumeUpload from "@/components/ResumeUpload";
-import JobDescriptionInput from "@/components/JobDescriptionInput";
-import AnalyzeButton from "@/components/AnalyzeButton";
 import { getCurrentUser } from "@/lib/auth";
-import { getUserAccessInfo, hasActiveMembership } from "@/lib/db";
-
 // Update the url to point to any asset in /public or an external image
 const heroBackgroundImage = "url('/hero-background.jpg')";
 
 export default async function Home() {
   const user = await getCurrentUser();
-  const accessInfo = user?.email ? await getUserAccessInfo(user.email) : null;
-  const credits = accessInfo?.credits ?? 0;
-  const membershipActive = accessInfo ? hasActiveMembership(accessInfo) : false;
-  const canAnalyze = Boolean(user?.email && (credits > 0 || membershipActive));
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -109,86 +100,6 @@ export default async function Home() {
           </div>
         </section>
 
-        <section id="analyzer" className="space-y-6 text-center">
-          <div>
-            <p className="text-sm uppercase tracking-[0.35em] text-gray-500">
-              Resume analyzer
-            </p>
-            <h2 className="text-3xl font-semibold">Upload and improve</h2>
-            <p className="mt-3 text-gray-400">
-              {canAnalyze
-                ? "Fill out the details below and run your personalized analysis."
-                : "Create an account or grab a one-time credit to unlock your analysis."}
-            </p>
-          </div>
-
-          {canAnalyze ? (
-            <div className="mx-auto w-full max-w-2xl space-y-8 rounded-2xl border border-gray-800 bg-gray-900/80 p-6 shadow-lg">
-              <ResumeUpload />
-              <JobDescriptionInput />
-              <AnalyzeButton />
-              {accessInfo && (
-                <p className="text-sm text-gray-500">
-                  {membershipActive
-                    ? accessInfo.membershipPlan === "lifetime"
-                      ? "Status: Unlimited access (Lifetime)"
-                      : `Status: Membership active until ${
-                          accessInfo.membershipExpiresAt
-                            ? new Intl.DateTimeFormat("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              }).format(accessInfo.membershipExpiresAt)
-                            : ""
-                        }`
-                    : `Credits remaining: ${credits}`}
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 rounded-2xl border border-gray-800 bg-gray-900/40 p-8 text-left shadow-lg">
-              {user?.email ? (
-                <>
-                  <h3 className="text-2xl font-semibold">Access Locked 🔒</h3>
-                  <p className="text-gray-400">
-                    You&apos;re out of credits. Grab a one-time purchase to run
-                    your next resume analysis.
-                  </p>
-                  <Link
-                    href="/pricing"
-                    className="w-full rounded-full bg-blue-600 px-5 py-3 text-center text-sm font-semibold transition hover:bg-blue-500"
-                  >
-                    Purchase Credits
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <h3 className="text-2xl font-semibold">
-                    Unlock ATS insights
-                  </h3>
-                  <p className="text-gray-400">
-                    Sign up to start analyzing or grab a one-time analysis if
-                    you just want to try it out first.
-                  </p>
-                  <div className="flex w-full flex-col gap-3 sm:flex-row">
-                    <Link
-                      href="/signup"
-                      className="flex-1 rounded-full border border-gray-700 px-5 py-3 text-center text-sm font-semibold transition hover:border-gray-500"
-                    >
-                      Create Account
-                    </Link>
-                    <Link
-                      href="/pricing"
-                      className="flex-1 rounded-full bg-blue-600 px-5 py-3 text-center text-sm font-semibold transition hover:bg-blue-500"
-                    >
-                      One-Time Purchase
-                    </Link>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </section>
       </div>
     </main>
   );

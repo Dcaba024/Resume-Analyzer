@@ -1,7 +1,8 @@
 // lib/resumeDownload.ts
 import { PDFDocument, StandardFonts, type PDFFont } from "pdf-lib";
 
-const DEFAULT_FILE_NAME = "Updated-Resume";
+const DEFAULT_RESUME_FILE_NAME = "Updated-Resume";
+const DEFAULT_COVER_LETTER_FILE_NAME = "Cover-Letter";
 const PAGE_MARGIN = 48;
 const FONT_SIZE = 11;
 const LINE_HEIGHT = 16;
@@ -15,12 +16,22 @@ function toAsciiSafe(value: string) {
 }
 
 export function buildResumeFileName(fullName?: string | null) {
-  if (!fullName) return `${DEFAULT_FILE_NAME}.pdf`;
+  const base = buildBaseFileName(fullName);
+  return `${base || DEFAULT_RESUME_FILE_NAME}.pdf`;
+}
+
+export function buildCoverLetterFileName(fullName?: string | null) {
+  const base = buildBaseFileName(fullName);
+  const suffix = base ? `${base}-Cover-Letter` : DEFAULT_COVER_LETTER_FILE_NAME;
+  return `${suffix}.pdf`;
+}
+
+function buildBaseFileName(fullName?: string | null) {
+  if (!fullName) return "";
   const sanitized = toAsciiSafe(fullName);
-  if (!sanitized) return `${DEFAULT_FILE_NAME}.pdf`;
+  if (!sanitized) return "";
   const parts = sanitized.split(/\s+/).filter(Boolean);
-  const joined = parts.join("-");
-  return `${joined || DEFAULT_FILE_NAME}.pdf`;
+  return parts.join("-");
 }
 
 function wrapLine(
@@ -106,12 +117,23 @@ export async function downloadResumeAsPdf(
   content: string,
   fullName?: string | null
 ) {
+  await downloadDocumentAsPdf(content, buildResumeFileName(fullName));
+}
+
+export async function downloadCoverLetterAsPdf(
+  content: string,
+  fullName?: string | null
+) {
+  await downloadDocumentAsPdf(content, buildCoverLetterFileName(fullName));
+}
+
+async function downloadDocumentAsPdf(content: string, fileName: string) {
   if (typeof window === "undefined") {
     throw new Error("PDF generation is only available in the browser.");
   }
 
   if (!content.trim()) {
-    throw new Error("Resume content is empty.");
+    throw new Error("Document content is empty.");
   }
 
   const pdfDoc = await PDFDocument.create();
@@ -151,7 +173,7 @@ export async function downloadResumeAsPdf(
 
   const link = document.createElement("a");
   link.href = url;
-  link.download = buildResumeFileName(fullName);
+  link.download = fileName;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
