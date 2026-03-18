@@ -40,20 +40,23 @@ function wrapLine(
   fontSize: number,
   maxWidth: number
 ) {
-  const normalized = line.trim();
-  if (!normalized) {
+  const trailingTrimmed = line.replace(/\s+$/g, "");
+  if (!trailingTrimmed.trim()) {
     return [""];
   }
 
-  let tokens = normalized.split(/\s+/);
-  if (normalized.startsWith("•")) {
-    const remainder = normalized.slice(1).trim();
-    if (!remainder) {
-      tokens = ["•"];
-    } else {
-      const rest = remainder.split(/\s+/);
-      tokens = [`• ${rest[0]}`, ...rest.slice(1)];
-    }
+  const leadingWhitespace = trailingTrimmed.match(/^\s*/)?.[0] ?? "";
+  const normalized = trailingTrimmed.trim();
+  const bulletPrefixMatch = normalized.match(/^([•-])\s+/);
+  const bulletPrefix = bulletPrefixMatch ? `${bulletPrefixMatch[1]} ` : "";
+  const contentStart = bulletPrefix.length;
+  const content = contentStart > 0 ? normalized.slice(contentStart).trim() : normalized;
+
+  let tokens = content.split(/\s+/).filter(Boolean);
+  if (bulletPrefix && !tokens.length) {
+    tokens = [bulletPrefix.trim()];
+  } else if (bulletPrefix && tokens.length) {
+    tokens = [`${bulletPrefix}${tokens[0]}`, ...tokens.slice(1)];
   }
 
   const lines: string[] = [];
@@ -83,31 +86,36 @@ function wrapLine(
     return segments;
   };
 
+  const applyIndentation = (value: string) =>
+    value ? `${leadingWhitespace}${value}` : leadingWhitespace;
+
   for (const token of tokens) {
     const candidate = appendWord(currentLine, token);
-    if (font.widthOfTextAtSize(candidate, fontSize) <= maxWidth) {
+    if (
+      font.widthOfTextAtSize(applyIndentation(candidate), fontSize) <= maxWidth
+    ) {
       currentLine = candidate;
       continue;
     }
 
     if (currentLine) {
-      lines.push(currentLine);
+      lines.push(applyIndentation(currentLine));
       currentLine = "";
     }
 
-    if (font.widthOfTextAtSize(token, fontSize) <= maxWidth) {
+    if (font.widthOfTextAtSize(applyIndentation(token), fontSize) <= maxWidth) {
       currentLine = token;
       continue;
     }
 
     const broken = breakWord(token);
     if (!broken.length) continue;
-    lines.push(...broken.slice(0, -1));
+    lines.push(...broken.slice(0, -1).map(applyIndentation));
     currentLine = broken[broken.length - 1];
   }
 
   if (currentLine) {
-    lines.push(currentLine);
+    lines.push(applyIndentation(currentLine));
   }
 
   return lines.length ? lines : [""];

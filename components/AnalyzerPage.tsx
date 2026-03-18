@@ -42,6 +42,7 @@ export default async function AnalyzerPage() {
     .filter(Boolean)
     .join(" ")
     .trim();
+  const displayName = fullName || user.email;
   const membershipLabel = getMembershipLabel(membershipPlan);
   const statusLabel = membershipActive
     ? membershipPlan === "lifetime"
@@ -103,6 +104,9 @@ export default async function AnalyzerPage() {
         <header className="text-center">
           <p className="text-sm uppercase tracking-[0.35em] text-gray-500">
             Resume analyzer
+          </p>
+          <p className="mt-4 text-sm font-medium text-blue-300">
+            Signed in as {displayName}
           </p>
           <h1 className="mt-3 text-3xl font-semibold">Run your analysis</h1>
           <p className="mt-3 text-gray-400">

@@ -29,18 +29,22 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
     jobDescription,
     setAnalysis,
     setRewrittenResume,
+    setDownloadableResume,
     setCoverLetter,
     setValidationSummary,
     setImprovedMatchScore,
     setBaselineMatchScore,
+    setAgentReports,
     setLoading,
     loading,
     analysis,
     rewrittenResume,
+    downloadableResume,
     coverLetter,
     validationSummary,
     improvedMatchScore,
     baselineMatchScore,
+    agentReports,
   } = useResumeStore()
 
   useEffect(() => {
@@ -96,10 +100,12 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
     startProgress()
     setAnalysis('')
     setRewrittenResume('')
+    setDownloadableResume('')
     setCoverLetter('')
     setValidationSummary('')
     setImprovedMatchScore(null)
     setBaselineMatchScore(null)
+    setAgentReports([])
     setDownloadError(null)
     setCoverDownloadError(null)
 
@@ -123,6 +129,7 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
       setProgressLabel('Validating ATS formatting & scores...')
       setAnalysis(data.analysis ?? data.result ?? '')
       setRewrittenResume(data.rewrittenResume ?? '')
+      setDownloadableResume(data.downloadableResume ?? data.rewrittenResume ?? '')
       setCoverLetter(data.coverLetter ?? '')
       setValidationSummary(data.validationSummary ?? '')
       setImprovedMatchScore(
@@ -135,16 +142,33 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
           ? data.baselineMatchScore
           : null
       )
+      setAgentReports(
+        Array.isArray(data.agentReports)
+          ? data.agentReports.filter(
+              (report: unknown): report is { name: string; summary: string } =>
+                Boolean(
+                  report &&
+                    typeof report === 'object' &&
+                    'name' in report &&
+                    'summary' in report &&
+                    typeof report.name === 'string' &&
+                    typeof report.summary === 'string'
+                )
+            )
+          : []
+      )
       success = true
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Unable to analyze resume.'
       setAnalysis(`❌ ${message}`)
       setRewrittenResume('')
+      setDownloadableResume('')
       setCoverLetter('')
       setValidationSummary('')
       setImprovedMatchScore(null)
       setBaselineMatchScore(null)
+      setAgentReports([])
       setProgressLabel('Analysis failed. Please try again.')
     } finally {
       completeProgress(success)
@@ -164,11 +188,12 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
   }
 
   const handleDownloadPdf = async () => {
-    if (!rewrittenResume) return
+    const resumeForDownload = downloadableResume || rewrittenResume
+    if (!resumeForDownload) return
     setDownloadError(null)
     setDownloading(true)
     try {
-      await downloadResumeAsPdf(rewrittenResume, fullName)
+      await downloadResumeAsPdf(resumeForDownload, fullName)
     } catch (error) {
       console.error('Failed to download resume PDF', error)
       setDownloadError('Unable to generate PDF. Please try again.')
@@ -234,6 +259,29 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
       {analysis && (
         <div className="mt-6 rounded-md border border-gray-700 bg-gray-900 p-4 text-left text-sm whitespace-pre-wrap">
           {analysis}
+        </div>
+      )}
+
+      {agentReports.length > 0 && (
+        <div className="mt-6 rounded-xl border border-gray-700 bg-gray-900 p-4 text-left text-sm text-gray-100">
+          <h3 className="text-base font-semibold text-white">
+            AI Agent Insights
+          </h3>
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            {agentReports.map((report) => (
+              <div
+                key={report.name}
+                className="rounded-lg border border-gray-800 px-4 py-3"
+              >
+                <p className="text-xs uppercase tracking-wide text-blue-300">
+                  {report.name}
+                </p>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-gray-300">
+                  {report.summary}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
