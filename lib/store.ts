@@ -25,6 +25,8 @@ interface ResumeStore {
   setImprovedMatchScore: (score: number | null) => void
   baselineMatchScore: number | null
   setBaselineMatchScore: (score: number | null) => void
+  judgeReason: string | null
+  setJudgeReason: (reason: string | null) => void
   agentReports: AgentReport[]
   setAgentReports: (reports: AgentReport[]) => void
   loading: boolean
@@ -41,6 +43,7 @@ export const useResumeStore = create<ResumeStore>((set) => ({
   validationSummary: '',
   improvedMatchScore: null,
   baselineMatchScore: null,
+  judgeReason: null,
   agentReports: [],
   loading: false,
   setResumeText: (text) => set({ resumeText: text }),
@@ -52,6 +55,7 @@ export const useResumeStore = create<ResumeStore>((set) => ({
   setValidationSummary: (text) => set({ validationSummary: text }),
   setImprovedMatchScore: (score) => set({ improvedMatchScore: score }),
   setBaselineMatchScore: (score) => set({ baselineMatchScore: score }),
+  setJudgeReason: (reason) => set({ judgeReason: reason }),
   setAgentReports: (reports) => set({ agentReports: reports }),
   setLoading: (isLoading) => set({ loading: isLoading }),
 }))

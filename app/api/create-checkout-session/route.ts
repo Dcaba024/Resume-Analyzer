@@ -1,6 +1,5 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
 import { PlanId } from "@/lib/plans";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -91,14 +90,6 @@ const priceConfig: Record<PlanId, Stripe.Checkout.SessionCreateParams> = {
 };
 
 export async function POST(request: Request) {
-  const user = await getCurrentUser();
-  if (!user?.email) {
-    return NextResponse.json(
-      { error: "You must be signed in before purchasing." },
-      { status: 401 }
-    );
-  }
-
   const { planId } = (await request.json().catch(() => ({
     planId: "",
   }))) as { planId: PlanId };
@@ -114,7 +105,6 @@ export async function POST(request: Request) {
   const session = await stripe.checkout.sessions.create({
     ...config,
     metadata: { planId },
-    customer_email: user.email,
     success_url: `${process.env.NEXT_PUBLIC_APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
   });

@@ -34,6 +34,7 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
     setValidationSummary,
     setImprovedMatchScore,
     setBaselineMatchScore,
+    setJudgeReason,
     setAgentReports,
     setLoading,
     loading,
@@ -44,6 +45,7 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
     validationSummary,
     improvedMatchScore,
     baselineMatchScore,
+    judgeReason,
     agentReports,
   } = useResumeStore()
 
@@ -105,6 +107,7 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
     setValidationSummary('')
     setImprovedMatchScore(null)
     setBaselineMatchScore(null)
+    setJudgeReason(null)
     setAgentReports([])
     setDownloadError(null)
     setCoverDownloadError(null)
@@ -142,6 +145,11 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
           ? data.baselineMatchScore
           : null
       )
+      setJudgeReason(
+        typeof data.judgeReason === 'string' && data.judgeReason.trim()
+          ? data.judgeReason
+          : null
+      )
       setAgentReports(
         Array.isArray(data.agentReports)
           ? data.agentReports.filter(
@@ -168,6 +176,7 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
       setValidationSummary('')
       setImprovedMatchScore(null)
       setBaselineMatchScore(null)
+      setJudgeReason(null)
       setAgentReports([])
       setProgressLabel('Analysis failed. Please try again.')
     } finally {
@@ -312,6 +321,16 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
             <p className="mt-4 whitespace-pre-wrap text-sm text-gray-300">
               {validationSummary}
             </p>
+          )}
+          {judgeReason && (
+            <div className="mt-4 rounded-lg border border-red-800 bg-red-950/50 px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-red-300">
+                Judge: Why It Cannot Reach 75/100
+              </p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-red-200">
+                {judgeReason}
+              </p>
+            </div>
           )}
         </div>
       )}

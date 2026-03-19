@@ -46,28 +46,21 @@ function SuccessContent() {
       <div className="bg-gray-900 p-8 rounded-2xl shadow-lg text-center max-w-md">
         <CheckCircle className="text-green-400 w-16 h-16 mx-auto mb-4" />
 
-        <h1 className="text-3xl font-bold mb-2">Payment Successful 🎉</h1>
+        <h1 className="text-3xl font-bold mb-2">Resume Analyzer</h1>
 
         <p className="text-gray-400 mb-6">
           {status === "pending"
-            ? "Finalizing your credits..."
+            ? "Finishing your request..."
             : status === "error"
             ? error
-            : "Your credits or membership have been applied to your account."}
+            : "The app is currently free to use. Head back to the dashboard to run another analysis."}
         </p>
 
         <Link
-          href="/dashboard"
+          href="/"
           className="block w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-medium"
         >
           Go to Dashboard
-        </Link>
-
-        <Link
-          href="/pricing"
-          className="block w-full mt-3 text-gray-400 underline"
-        >
-          Buy More Credits
         </Link>
       </div>
     </main>

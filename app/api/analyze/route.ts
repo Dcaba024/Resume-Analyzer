@@ -7,15 +7,10 @@ import {
   tool,
 } from "@openai/agents";
 import { z } from "zod";
-import { getCurrentUser } from "@/lib/auth";
-import {
-  decrementUserCredit,
-  getUserAccessInfo,
-  hasActiveMembership,
-} from "@/lib/db";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = "gpt-4o-mini";
+const TARGET_MATCH_SCORE = 75;
 
 let tracingConfigured = false;
 
@@ -54,6 +49,11 @@ type ValidationResult = {
   passesValidation: boolean;
 };
 
+type JudgeResult = {
+  judgeReason: string | null;
+  judgeReport: AgentReport | null;
+};
+
 type FinalAgentOutput = {
   analysis: string;
   rewrittenResume: string;
@@ -83,6 +83,10 @@ const coverLetterPublisherSchema = z.object({
   coverLetter: z.string(),
 });
 
+const judgeSchema = z.object({
+  reason: z.string(),
+});
+
 export async function POST(req: Request) {
   const { resumeText, jobDescription } = await req.json();
 
@@ -96,27 +100,11 @@ export async function POST(req: Request) {
     );
   }
 
-  const user = await getCurrentUser();
-  if (!user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const accessInfo = await getUserAccessInfo(user.email);
-  const credits = accessInfo?.credits ?? 0;
-  const membershipActive = hasActiveMembership(accessInfo);
-
-  if (!membershipActive && credits <= 0) {
-    return NextResponse.json(
-      { error: "No credits. Please purchase more." },
-      { status: 402 }
-    );
-  }
-
   const candidateProfile = buildCandidateProfile(
     sanitizedResumeText,
-    user.email,
-    accessInfo?.firstName ?? null,
-    accessInfo?.lastName ?? null
+    null,
+    null,
+    null
   );
   const toolkit = buildAnalysisToolkit(
     sanitizedResumeText,
@@ -139,21 +127,27 @@ export async function POST(req: Request) {
     resumeBlueprint,
     traceGroupId
   );
-
-  if (!membershipActive) {
-    await decrementUserCredit(user.email);
-  }
+  const judgeResult = await runJudgeWorkflow(
+    sanitizedResumeText,
+    sanitizedJobDescription,
+    finalOutput,
+    toolkit,
+    baselineMatchScore,
+    finalOutput.improvedMatchScore
+  );
 
   return NextResponse.json({
     analysis: finalOutput.analysis,
     rewrittenResume: finalOutput.rewrittenResume,
     downloadableResume: finalOutput.downloadableResume,
     coverLetter: finalOutput.coverLetter,
-    agentReports: finalOutput.agentReports,
     validationSummary: finalOutput.validationSummary,
     improvedMatchScore: finalOutput.improvedMatchScore,
     baselineMatchScore,
-    creditsRemaining: membershipActive ? credits : Math.max(credits - 1, 0),
+    judgeReason: judgeResult.judgeReason,
+    agentReports: judgeResult.judgeReport
+      ? appendOrReplaceAgentReport(finalOutput.agentReports, judgeResult.judgeReport)
+      : finalOutput.agentReports,
   });
 }
 
@@ -190,6 +184,7 @@ You are given deterministic candidate identity, original resume layout, and job-
 Your job:
 1. Produce the final analysis, rewritten resume, and cover letter in one pass.
 2. Never invent qualifications, achievements, certifications, tools, domains, industries, or stakeholder experience that are not supported by the original resume.
+3. Aim to improve the resume honestly toward a match score of ${TARGET_MATCH_SCORE}/100 or higher when the source material supports it.
 
 Mandatory rules:
 - The downloadable resume must contain only final resume content, never coaching notes or advice.
@@ -206,6 +201,7 @@ Mandatory rules:
 - Omit unsupported sections instead of filling them with placeholders or suggestions.
 - Preserve the candidate's real name, email, and phone when available.
 - Even for a poor-fit role, the rewritten resume should look polished, specific, and genuinely useful for adjacent roles.
+- If the source material cannot honestly support a ${TARGET_MATCH_SCORE}/100 or higher score, still produce the strongest truthful resume you can without fabricating fit.
 
 Return JSON only matching the required schema.
 
@@ -290,6 +286,140 @@ ${jobDescription}
       candidateProfile,
       toolkit
     );
+  } finally {
+    await getGlobalTraceProvider().forceFlush();
+  }
+}
+
+async function runJudgeWorkflow(
+  originalResumeText: string,
+  jobDescription: string,
+  finalOutput: FinalAgentOutput,
+  toolkit: AnalysisToolkit,
+  baselineMatchScore: number,
+  improvedMatchScore: number | null
+): Promise<JudgeResult> {
+  if (improvedMatchScore !== null && improvedMatchScore >= TARGET_MATCH_SCORE) {
+    return {
+      judgeReason: null,
+      judgeReport: {
+        name: "Judge",
+        summary: `The rewritten resume reached ${improvedMatchScore}/100, meeting the ${TARGET_MATCH_SCORE}/100 target.`,
+      },
+    };
+  }
+
+  const fallbackReason = buildJudgeFallbackReason(
+    toolkit,
+    baselineMatchScore,
+    improvedMatchScore
+  );
+
+  if (!OPENAI_API_KEY) {
+    return {
+      judgeReason: fallbackReason,
+      judgeReport: fallbackReason
+        ? {
+            name: "Judge",
+            summary: fallbackReason,
+          }
+        : null,
+    };
+  }
+
+  const prompt = `
+You are the Judge agent for a resume analyzer.
+Your job is to explain why the rewritten resume could not honestly reach a match score of ${TARGET_MATCH_SCORE}/100 or higher.
+
+Mandatory rules:
+- Be concise and specific.
+- Do not invent qualifications or missing experience.
+- Focus on why the score could not reach ${TARGET_MATCH_SCORE}/100 honestly from the original source material.
+- Use the recruiter and validation notes below as context. Treat them as other agents' input you are responding to.
+- Mention the biggest blockers, such as missing source-backed keywords, unsupported experience, or role mismatch.
+- If the rewritten score improved but still stayed below ${TARGET_MATCH_SCORE}, explain why the gap remains.
+- Return JSON only.
+
+Target score: ${TARGET_MATCH_SCORE}
+Baseline score: ${baselineMatchScore}
+Rewritten score: ${improvedMatchScore}
+
+Detected matched keywords:
+${toolkit.matchedKeywords.join(", ") || "None"}
+
+Detected missing keywords:
+${toolkit.missingKeywords.join(", ") || "None"}
+
+Recruiter analysis:
+${finalOutput.analysis}
+
+Validation summary:
+${finalOutput.validationSummary}
+
+Other agent notes:
+${finalOutput.agentReports.map((report) => `${report.name}: ${report.summary}`).join("\n") || "None"}
+
+Original resume:
+${originalResumeText}
+
+Rewritten resume:
+${finalOutput.rewrittenResume}
+
+Job description:
+${jobDescription}
+`;
+
+  try {
+    const runner = new Runner({
+      model: MODEL,
+      modelSettings: {
+        maxTokens: 400,
+        text: { verbosity: "low" },
+      },
+      workflowName: "Resume Analyzer",
+      groupId: `judge-${Date.now()}`,
+      traceIncludeSensitiveData: true,
+      traceMetadata: {
+        app: "resume-analyzer",
+        step: "Judge Agent",
+      },
+    });
+
+    const agent = new Agent({
+      name: "Judge",
+      instructions:
+        "Return only valid JSON matching the required output schema. Do not call tools.",
+      model: MODEL,
+      outputType: judgeSchema,
+    });
+
+    const result = await runner.run(agent, prompt, { maxTurns: 1 });
+    const reason =
+      result.finalOutput && typeof result.finalOutput.reason === "string"
+        ? sanitizeMultilineInput(result.finalOutput.reason)
+        : fallbackReason;
+    const finalReason = reason || fallbackReason;
+
+    return {
+      judgeReason: finalReason,
+      judgeReport: finalReason
+        ? {
+            name: "Judge",
+            summary: finalReason,
+          }
+        : null,
+    };
+  } catch (error) {
+    console.error("OpenAI judge workflow error:", error);
+    return {
+      judgeReason: fallbackReason,
+      judgeReport: fallbackReason
+        ? {
+            name: "Judge",
+            summary: fallbackReason,
+          }
+        : null,
+    };
   } finally {
     await getGlobalTraceProvider().forceFlush();
   }
@@ -643,7 +773,30 @@ function buildDefaultAgentReports(
       summary:
         "Final cover letter pass focuses on grammar, punctuation, tone, and polish.",
     },
+    {
+      name: "Judge",
+      summary:
+        `Checks whether the rewritten resume can honestly reach ${TARGET_MATCH_SCORE}/100 and explains when the source material prevents that.`,
+    },
   ];
+}
+
+function buildJudgeFallbackReason(
+  toolkit: AnalysisToolkit,
+  baselineMatchScore: number,
+  improvedMatchScore: number | null
+) {
+  const score = improvedMatchScore ?? baselineMatchScore;
+  if (score >= TARGET_MATCH_SCORE) {
+    return null;
+  }
+
+  if (toolkit.missingKeywords.length === 0) {
+    return `Judge: the resume reached only ${score}/100, still below the ${TARGET_MATCH_SCORE}/100 target, because the tracked keywords are already covered and wording changes alone cannot create more measurable alignment.`;
+  }
+
+  const blockers = toolkit.missingKeywords.slice(0, 5).join(", ");
+  return `Judge: the resume reached ${score}/100, below the ${TARGET_MATCH_SCORE}/100 target, because the source resume does not provide enough evidence to honestly add several missing job keywords or experiences, including ${blockers}.`;
 }
 
 function appendOrReplaceAgentReport(
@@ -965,7 +1118,7 @@ function extractCandidateProfile(resumeText: string): CandidateProfile {
 
 function buildCandidateProfile(
   resumeText: string,
-  accountEmail: string,
+  accountEmail: string | null,
   firstName: string | null,
   lastName: string | null
 ): CandidateProfile {
