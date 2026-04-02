@@ -11,6 +11,73 @@ type AnalyzeButtonProps = {
   fullName?: string | null
 }
 
+type ResumePreviewSection = {
+  heading: string
+  lines: string[]
+}
+
+function isResumeHeading(line: string) {
+  return /^(summary|core skills|skills|professional experience|experience|projects|education|certifications|additional details|additional information)$/i.test(
+    line.trim()
+  )
+}
+
+function parseResumePreview(resume: string) {
+  const lines = resume.split(/\r?\n/)
+  const headerLines: string[] = []
+  const sections: ResumePreviewSection[] = []
+  let currentSection: ResumePreviewSection | null = null
+  let seenSection = false
+
+  for (const rawLine of lines) {
+    const line = rawLine.replace(/\s+$/g, '')
+    const trimmed = line.trim()
+
+    if (!trimmed) {
+      if (currentSection && currentSection.lines[currentSection.lines.length - 1] !== '') {
+        currentSection.lines.push('')
+      }
+      continue
+    }
+
+    if (isResumeHeading(trimmed)) {
+      seenSection = true
+      currentSection = {
+        heading: trimmed.toUpperCase(),
+        lines: [],
+      }
+      sections.push(currentSection)
+      continue
+    }
+
+    if (!seenSection) {
+      headerLines.push(trimmed)
+      continue
+    }
+
+    if (!currentSection) {
+      currentSection = {
+        heading: 'EXPERIENCE',
+        lines: [],
+      }
+      sections.push(currentSection)
+    }
+
+    currentSection.lines.push(line)
+  }
+
+  return {
+    headerLines,
+    sections: sections.map((section) => ({
+      ...section,
+      lines: section.lines.filter((line, index, source) => {
+        if (line !== '') return true
+        return source[index - 1] !== '' && source[index + 1] !== ''
+      }),
+    })),
+  }
+}
+
 export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
   const [copied, setCopied] = useState(false)
   const [coverCopied, setCoverCopied] = useState(false)
@@ -48,6 +115,7 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
     judgeReason,
     agentReports,
   } = useResumeStore()
+  const resumePreview = rewrittenResume ? parseResumePreview(rewrittenResume) : null
 
   useEffect(() => {
     return () => {
@@ -338,7 +406,12 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
       {rewrittenResume && (
         <div className="mt-6 space-y-4 rounded-xl border border-gray-700 bg-gray-900 p-4 text-left">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="text-lg font-semibold text-white">Updated Resume</h3>
+            <div className="flex flex-col">
+              <h3 className="text-lg font-semibold text-white">Updated Resume</h3>
+              <p className="text-xs text-gray-400 sm:text-sm">
+                Recruiter-style preview with cleaner spacing and section hierarchy.
+              </p>
+            </div>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -360,9 +433,66 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
           {downloadError && (
             <p className="text-sm text-red-400">{downloadError}</p>
           )}
-          <pre className="whitespace-pre-wrap text-sm leading-relaxed text-gray-100">
-            {rewrittenResume}
-          </pre>
+          {resumePreview ? (
+            <div className="overflow-hidden rounded-3xl border border-stone-300 bg-stone-50 shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
+              <div className="mx-auto max-w-3xl px-6 py-8 sm:px-10 sm:py-10 text-stone-900">
+                {resumePreview.headerLines.length > 0 && (
+                  <header className="border-b border-stone-300 pb-5 text-center">
+                    <h4
+                      className="text-3xl font-semibold tracking-[0.08em] text-stone-900"
+                      style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+                    >
+                      {resumePreview.headerLines[0]}
+                    </h4>
+                    {resumePreview.headerLines.slice(1).map((line) => (
+                      <p key={line} className="mt-2 text-sm text-stone-600">
+                        {line}
+                      </p>
+                    ))}
+                  </header>
+                )}
+
+                <div className="space-y-7 pt-6">
+                  {resumePreview.sections.map((section) => (
+                    <section key={section.heading}>
+                      <div className="flex items-center gap-3">
+                        <h5 className="text-xs font-semibold tracking-[0.28em] text-stone-700">
+                          {section.heading}
+                        </h5>
+                        <div className="h-px flex-1 bg-stone-300" />
+                      </div>
+                      <div className="mt-3 space-y-2 text-[15px] leading-7 text-stone-800">
+                        {section.lines.map((line, index) => {
+                          if (!line.trim()) {
+                            return <div key={`${section.heading}-${index}`} className="h-2" />
+                          }
+
+                          const bulletMatch = line.trim().match(/^[•-]\s+(.*)$/)
+                          if (bulletMatch) {
+                            return (
+                              <div
+                                key={`${section.heading}-${index}`}
+                                className="flex items-start gap-3"
+                              >
+                                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-stone-500" />
+                                <p>{bulletMatch[1]}</p>
+                              </div>
+                            )
+                          }
+
+                          return <p key={`${section.heading}-${index}`}>{line.trim()}</p>
+                        })}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <pre className="whitespace-pre-wrap text-sm leading-relaxed text-gray-100">
+              {rewrittenResume}
+            </pre>
+          )}
         </div>
       )}
 

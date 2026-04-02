@@ -192,6 +192,9 @@ Mandatory rules:
 - Keep the rewritten resume ATS-safe plain text with standard headings.
 - Make the rewritten resume presentable to recruiters and hiring managers, not just ATS systems.
 - The resume should read like a polished final document: concise summary, clear technical skills section when source-backed, clean section order, strong accomplishment wording, and no awkward filler.
+- Format the rewritten resume like a finished professional document in plain text: candidate name on the first line, contact details on the second line when available, then clearly separated sections with one blank line between sections.
+- Use conventional, all-caps section headings such as SUMMARY, CORE SKILLS, PROFESSIONAL EXPERIENCE, PROJECTS, and EDUCATION when those sections are source-backed.
+- Keep bullet formatting consistent within each section and favor concise, recruiter-friendly bullets over dense paragraphs.
 - Include a short professional summary when the source resume supports one. Keep it concise, specific, and keyword-relevant.
 - Include a technical skills or core skills section when the source resume contains source-backed tools, languages, frameworks, platforms, or technologies.
 - Do not remove an existing summary or skills section unless the source resume clearly lacks the information to support it.
@@ -577,6 +580,7 @@ Mandatory rules:
 - Preserve the original heading hierarchy when it is clear.
 - Preserve the original bullet markers and bullet density when it is clear.
 - Keep spacing and section grouping as close to the source resume as possible in plain text.
+- Make the result feel like a polished one-page or two-page recruiter resume, with a strong header, crisp section breaks, and consistent line rhythm.
 - If the source resume uses bullets in a section, keep bullets in that section.
 - If the source resume does not use bullets in a section, do not add them aggressively.
 - Reuse the source resume's line pattern and section spacing whenever possible, replacing only the body text that needs tailoring.
