@@ -115,7 +115,8 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
     judgeReason,
     agentReports,
   } = useResumeStore()
-  const resumePreview = rewrittenResume ? parseResumePreview(rewrittenResume) : null
+  const finalResume = downloadableResume || rewrittenResume
+  const resumePreview = finalResume ? parseResumePreview(finalResume) : null
 
   useEffect(() => {
     return () => {
@@ -254,9 +255,9 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
   }
 
   const handleCopyResume = async () => {
-    if (!rewrittenResume) return
+    if (!finalResume) return
     try {
-      await navigator.clipboard.writeText(rewrittenResume)
+      await navigator.clipboard.writeText(finalResume)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (error) {
@@ -265,12 +266,11 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
   }
 
   const handleDownloadPdf = async () => {
-    const resumeForDownload = downloadableResume || rewrittenResume
-    if (!resumeForDownload) return
+    if (!finalResume) return
     setDownloadError(null)
     setDownloading(true)
     try {
-      await downloadResumeAsPdf(resumeForDownload, fullName)
+      await downloadResumeAsPdf(finalResume, fullName)
     } catch (error) {
       console.error('Failed to download resume PDF', error)
       setDownloadError('Unable to generate PDF. Please try again.')
@@ -403,7 +403,7 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
         </div>
       )}
 
-      {rewrittenResume && (
+      {finalResume && (
         <div className="mt-6 space-y-4 rounded-xl border border-gray-700 bg-gray-900 p-4 text-left">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col">
@@ -490,7 +490,7 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
             </div>
           ) : (
             <pre className="whitespace-pre-wrap text-sm leading-relaxed text-gray-100">
-              {rewrittenResume}
+              {finalResume}
             </pre>
           )}
         </div>

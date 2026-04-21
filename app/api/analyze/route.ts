@@ -4,7 +4,6 @@ import {
   Runner,
   getGlobalTraceProvider,
   setDefaultOpenAITracingExporter,
-  tool,
 } from "@openai/agents";
 import { z } from "zod";
 
@@ -257,13 +256,6 @@ ${jobDescription}
       candidateProfile,
       toolkit
     );
-    const downloadableResume = await runResumeMakerWorkflow(
-      resumeText,
-      normalized.rewrittenResume,
-      candidateProfile,
-      resumeBlueprint,
-      traceGroupId
-    );
     const coverLetter = await runCoverLetterPublisherWorkflow(
       normalized.coverLetter,
       normalized.rewrittenResume,
@@ -273,7 +265,7 @@ ${jobDescription}
     );
     return {
       ...normalized,
-      downloadableResume,
+      downloadableResume: normalized.rewrittenResume,
       coverLetter,
       agentReports: appendOrReplaceAgentReport(normalized.agentReports, {
         name: "Cover Letter Publisher",
@@ -542,128 +534,6 @@ ATS Optimization Tips:
       validation.validationSummary
     ),
   };
-}
-
-async function runResumeMakerWorkflow(
-  originalResumeText: string,
-  rewrittenResume: string,
-  candidateProfile: CandidateProfile,
-  resumeBlueprint: ResumeBlueprint,
-  traceGroupId: string
-): Promise<string> {
-  if (!OPENAI_API_KEY) {
-    return rewrittenResume;
-  }
-
-  const getResumeBlueprintTool = tool({
-    name: "get_resume_blueprint",
-    description:
-      "Returns the original resume layout blueprint including section order, headings, bullet style, and sample body lines. Use it to keep the downloadable resume layout close to the original source resume.",
-    parameters: z.object({}),
-    strict: true,
-    execute: async () => resumeBlueprint,
-  });
-
-  const downloadResumeSchema = z.object({
-    downloadableResume: z.string(),
-  });
-
-  const prompt = `
-You are the Resume Maker Agent.
-Your only job is to convert the rewritten resume into the downloadable final resume while preserving the layout style of the original source resume as closely as possible.
-
-Mandatory rules:
-- First call \`get_resume_blueprint\`.
-- After that, return JSON immediately.
-- Treat the returned layout template as the structural scaffold for the downloadable resume.
-- Preserve the original resume's section order when it is clear.
-- Preserve the original heading hierarchy when it is clear.
-- Preserve the original bullet markers and bullet density when it is clear.
-- Keep spacing and section grouping as close to the source resume as possible in plain text.
-- Make the result feel like a polished one-page or two-page recruiter resume, with a strong header, crisp section breaks, and consistent line rhythm.
-- If the source resume uses bullets in a section, keep bullets in that section.
-- If the source resume does not use bullets in a section, do not add them aggressively.
-- Reuse the source resume's line pattern and section spacing whenever possible, replacing only the body text that needs tailoring.
-- Keep the content ATS-safe and recruiter-presentable.
-- Keep or strengthen a concise professional summary when the source resume supports one.
-- Keep or strengthen a technical skills or core skills section when the source resume supports one with real technologies.
-- Do not invent any information that is not supported by the original resume.
-- Do not add markdown characters such as *, _, #, or backticks.
-- Preserve the candidate's name, email, and phone.
-- This output is for the downloadable PDF, so it should look like a polished final resume, not like UI copy.
-
-Candidate profile:
-${JSON.stringify(candidateProfile, null, 2)}
-
-Original resume:
-${originalResumeText}
-
-Current rewritten resume:
-${rewrittenResume}
-`;
-
-  try {
-    const runner = new Runner({
-      model: MODEL,
-      modelSettings: {
-        maxTokens: 1800,
-        text: { verbosity: "medium" },
-      },
-      workflowName: "Resume Analyzer",
-      groupId: traceGroupId,
-      traceIncludeSensitiveData: true,
-      traceMetadata: {
-        app: "resume-analyzer",
-        step: "Resume Maker Agent",
-      },
-    });
-
-    const agent = new Agent({
-      name: "Resume Maker Agent",
-      instructions:
-        "Call get_resume_blueprint exactly once. Use it to preserve the source resume's layout decisions in the downloadable resume. Then return only valid JSON matching the required output schema.",
-      model: MODEL,
-      outputType: downloadResumeSchema,
-      tools: [getResumeBlueprintTool],
-    });
-
-    const result = await runner.run(agent, prompt, { maxTurns: 2 });
-    const finalOutput = result.finalOutput;
-    const downloadableResume =
-      finalOutput && typeof finalOutput.downloadableResume === "string"
-        ? finalOutput.downloadableResume
-        : rewrittenResume;
-    return sanitizeGeneratedDocument(
-      enforceResumeQuality(
-        rebuildResumeWithOriginalLayout(
-          originalResumeText,
-          downloadableResume,
-          candidateProfile
-        ),
-        originalResumeText,
-        "",
-        candidateProfile,
-        buildAnalysisToolkit(originalResumeText, rewrittenResume)
-      )
-    );
-  } catch (error) {
-    console.error("OpenAI resume maker workflow error:", error);
-    return sanitizeGeneratedDocument(
-      enforceResumeQuality(
-        rebuildResumeWithOriginalLayout(
-          originalResumeText,
-          rewrittenResume,
-          candidateProfile
-        ),
-        originalResumeText,
-        "",
-        candidateProfile,
-        buildAnalysisToolkit(originalResumeText, rewrittenResume)
-      )
-    );
-  } finally {
-    await getGlobalTraceProvider().forceFlush();
-  }
 }
 
 async function runCoverLetterPublisherWorkflow(
@@ -1207,70 +1077,6 @@ type ParsedResumeStructure = {
   sections: ParsedResumeSection[];
 };
 
-function rebuildResumeWithOriginalLayout(
-  originalResumeText: string,
-  generatedResumeText: string,
-  candidateProfile: CandidateProfile
-) {
-  const originalStructure = parseResumeStructure(originalResumeText);
-  const generatedStructure = parseResumeStructure(generatedResumeText);
-  const generatedWithIdentity = applyCandidateProfileToResume(
-    generatedResumeText,
-    candidateProfile
-  );
-
-  if (originalStructure.sections.length === 0) {
-    return generatedWithIdentity;
-  }
-
-  const generatedSections = new Map(
-    generatedStructure.sections.map((section) => [
-      normalizeHeadingLabel(section.heading),
-      section,
-    ])
-  );
-  const usedSectionKeys = new Set<string>();
-
-  const rebuiltSections = originalStructure.sections.map((originalSection) => {
-    const normalizedHeading = normalizeHeadingLabel(originalSection.heading);
-    const generatedSection = generatedSections.get(normalizedHeading);
-    if (generatedSection) {
-      usedSectionKeys.add(normalizedHeading);
-    }
-    const originalBulletMarker = detectSectionBulletMarker(originalSection.lines);
-    const sectionLines = generatedSection?.lines.length
-      ? applySectionBulletMarker(generatedSection.lines, originalBulletMarker)
-      : originalSection.lines;
-
-    return [originalSection.heading, ...sectionLines].join("\n").trim();
-  });
-
-  const additionalGeneratedSections = generatedStructure.sections
-    .filter(
-      (section) => !usedSectionKeys.has(normalizeHeadingLabel(section.heading))
-    )
-    .map((section) => [section.heading, ...section.lines].join("\n").trim());
-
-  const headerLines = buildResumeHeaderLines(
-    originalStructure.headerLines,
-    candidateProfile
-  );
-
-  const rebuiltResume = [...headerLines, ...rebuiltSections, ...additionalGeneratedSections]
-    .filter(Boolean)
-    .join("\n\n")
-    .trim();
-
-  if (
-    !rebuiltResume ||
-    rebuiltResume.length < Math.max(300, Math.floor(generatedWithIdentity.length * 0.6))
-  ) {
-    return generatedWithIdentity;
-  }
-
-  return rebuiltResume;
-}
-
 function parseResumeStructure(resumeText: string): ParsedResumeStructure {
   const lines = resumeText.replace(/\r\n/g, "\n").split("\n");
   const headerLines: string[] = [];
@@ -1386,67 +1192,6 @@ function trimSectionSpacing(lines: string[]) {
   }
 
   return trimmed;
-}
-
-function buildResumeHeaderLines(
-  originalHeaderLines: string[],
-  candidateProfile: CandidateProfile
-) {
-  const headerLines: string[] = [];
-
-  if (candidateProfile.originalName) {
-    headerLines.push(candidateProfile.originalName);
-  } else if (originalHeaderLines[0]?.trim()) {
-    headerLines.push(originalHeaderLines[0].trim());
-  }
-
-  const contactParts = [
-    candidateProfile.originalEmail,
-    candidateProfile.originalPhone,
-  ].filter(Boolean);
-
-  if (contactParts.length > 0) {
-    headerLines.push(contactParts.join(" | "));
-  } else {
-    const originalContactLine = originalHeaderLines.find((line) => /@|\d/.test(line));
-    if (originalContactLine?.trim()) {
-      headerLines.push(originalContactLine.trim());
-    }
-  }
-
-  return headerLines;
-}
-
-function detectSectionBulletMarker(lines: string[]) {
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (/^•\s+/.test(trimmed)) {
-      return "•";
-    }
-    if (/^-\s+/.test(trimmed)) {
-      return "-";
-    }
-  }
-
-  return null;
-}
-
-function applySectionBulletMarker(lines: string[], bulletMarker: string | null) {
-  if (!bulletMarker) {
-    return lines;
-  }
-
-  return lines.map((line) => {
-    const leadingWhitespace = line.match(/^\s*/)?.[0] ?? "";
-    const trimmed = line.trim();
-    if (/^[•-]\s+/.test(trimmed)) {
-      return `${leadingWhitespace}${bulletMarker} ${trimmed.replace(
-        /^[•-]\s+/,
-        ""
-      )}`;
-    }
-    return line;
-  });
 }
 
 function stripBulletPrefix(line: string) {
