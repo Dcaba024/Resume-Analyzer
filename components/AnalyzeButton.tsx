@@ -309,7 +309,7 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
       <button
         onClick={handleAnalyze}
         disabled={loading}
-        className="w-full bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-md text-white font-semibold transition-all disabled:opacity-50"
+        className="w-full rounded-[1.4rem] border border-emerald-200/20 bg-[linear-gradient(135deg,#8be1d0_0%,#4cbeb0_48%,#2f7f95_100%)] px-6 py-4 text-sm font-semibold tracking-[0.08em] text-slate-950 uppercase shadow-[0_20px_60px_rgba(64,182,170,0.28)] transition duration-300 hover:translate-y-[-1px] hover:shadow-[0_26px_70px_rgba(64,182,170,0.36)] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading
           ? `Analyzing${
@@ -319,14 +319,14 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
       </button>
 
       {(loading || progress > 0) && (
-        <div className="mt-3 text-left">
-          <div className="flex items-center justify-between text-xs text-gray-400">
+        <div className="mt-4 rounded-[1.5rem] border border-white/10 bg-[rgba(255,255,255,0.03)] p-4 text-left">
+          <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400">
             <span>{progressLabel}</span>
             <span>{progress ? `${Math.min(progress, 100).toFixed(0)}%` : ''}</span>
           </div>
-          <div className="mt-2 h-2 rounded-full bg-gray-800">
+          <div className="mt-3 h-2.5 rounded-full bg-white/8">
             <div
-              className="h-2 rounded-full bg-blue-500 transition-all duration-200"
+              className="h-2.5 rounded-full bg-[linear-gradient(90deg,#8be1d0_0%,#4cbeb0_55%,#65b7df_100%)] transition-all duration-200"
               style={{ width: `${Math.min(progress, 100)}%` }}
             />
           </div>
@@ -334,13 +334,13 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
       )}
 
       {analysis && (
-        <div className="mt-6 rounded-md border border-gray-700 bg-gray-900 p-4 text-left text-sm whitespace-pre-wrap">
+        <div className="mt-6 rounded-[1.75rem] border border-white/10 bg-[rgba(255,255,255,0.03)] p-5 text-left text-sm leading-7 whitespace-pre-wrap text-slate-200">
           {analysis}
         </div>
       )}
 
       {agentReports.length > 0 && (
-        <div className="mt-6 rounded-xl border border-gray-700 bg-gray-900 p-4 text-left text-sm text-gray-100">
+        <div className="mt-6 rounded-[1.75rem] border border-white/10 bg-[rgba(255,255,255,0.03)] p-5 text-left text-sm text-slate-100">
           <h3 className="text-base font-semibold text-white">
             AI Agent Insights
           </h3>
@@ -348,12 +348,12 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
             {agentReports.map((report) => (
               <div
                 key={report.name}
-                className="rounded-lg border border-gray-800 px-4 py-3"
+                className="rounded-[1.25rem] border border-white/8 bg-[rgba(6,16,24,0.7)] px-4 py-4"
               >
-                <p className="text-xs uppercase tracking-wide text-blue-300">
+                <p className="text-xs uppercase tracking-[0.22em] text-[var(--accent)]">
                   {report.name}
                 </p>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-gray-300">
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-300">
                   {report.summary}
                 </p>
               </div>
@@ -363,39 +363,39 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
       )}
 
       {(validationSummary || baselineMatchScore !== null || improvedMatchScore !== null) && (
-        <div className="mt-6 rounded-xl border border-gray-700 bg-gray-900 p-4 text-left text-sm text-gray-100">
+        <div className="mt-6 rounded-[1.75rem] border border-white/10 bg-[rgba(255,255,255,0.03)] p-5 text-left text-sm text-slate-100">
           <h3 className="text-base font-semibold text-white">
             ATS Validation & Match Score
           </h3>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-lg border border-gray-800 px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-gray-400">
+            <div className="rounded-[1.4rem] border border-white/8 bg-[rgba(6,16,24,0.72)] px-4 py-4">
+              <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
                 Original Match Score
               </p>
-              <p className="text-2xl font-semibold text-white">
+              <p className="mt-3 text-3xl font-semibold text-white">
                 {baselineMatchScore !== null ? `${baselineMatchScore} / 100` : '––'}
               </p>
             </div>
-            <div className="rounded-lg border border-gray-800 px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-gray-400">
+            <div className="rounded-[1.4rem] border border-emerald-300/12 bg-[linear-gradient(180deg,rgba(125,211,199,0.12),rgba(6,16,24,0.76))] px-4 py-4">
+              <p className="text-xs uppercase tracking-[0.22em] text-slate-300">
                 New Match Score
               </p>
-              <p className="text-2xl font-semibold text-white">
+              <p className="mt-3 text-3xl font-semibold text-white">
                 {improvedMatchScore !== null ? `${improvedMatchScore} / 100` : '––'}
               </p>
             </div>
           </div>
           {validationSummary && (
-            <p className="mt-4 whitespace-pre-wrap text-sm text-gray-300">
+            <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-300">
               {validationSummary}
             </p>
           )}
           {judgeReason && (
-            <div className="mt-4 rounded-lg border border-red-800 bg-red-950/50 px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-red-300">
+            <div className="mt-4 rounded-[1.3rem] border border-rose-300/14 bg-[rgba(63,11,21,0.56)] px-4 py-4">
+              <p className="text-xs uppercase tracking-[0.22em] text-rose-200">
                 Judge: Why It Cannot Reach 75/100
               </p>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-red-200">
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-rose-100/90">
                 {judgeReason}
               </p>
             </div>
@@ -404,19 +404,19 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
       )}
 
       {finalResume && (
-        <div className="mt-6 space-y-4 rounded-xl border border-gray-700 bg-gray-900 p-4 text-left">
+        <div className="mt-6 space-y-4 rounded-[1.75rem] border border-white/10 bg-[rgba(255,255,255,0.03)] p-5 text-left">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col">
               <h3 className="text-lg font-semibold text-white">Updated Resume</h3>
-              <p className="text-xs text-gray-400 sm:text-sm">
-                Recruiter-style preview with cleaner spacing and section hierarchy.
+              <p className="text-xs text-slate-400 sm:text-sm">
+                Refined preview with cleaner typography, calmer spacing, and a clearer hierarchy.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={handleCopyResume}
-                className="inline-flex items-center justify-center rounded-full border border-gray-600 px-4 py-2 text-sm font-medium text-white transition hover:border-gray-400"
+                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/6 px-4 py-2 text-sm font-medium text-white transition hover:border-[var(--accent)] hover:bg-[rgba(125,211,199,0.08)]"
               >
                 {copied ? 'Copied!' : 'Copy Resume'}
               </button>
@@ -424,28 +424,28 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
                 type="button"
                 onClick={handleDownloadPdf}
                 disabled={downloading}
-                className="inline-flex items-center justify-center rounded-full border border-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:border-blue-400 disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-full border border-emerald-300/20 bg-[rgba(125,211,199,0.12)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[rgba(125,211,199,0.2)] disabled:opacity-60"
               >
                 {downloading ? 'Preparing PDF...' : 'Download PDF'}
               </button>
             </div>
           </div>
           {downloadError && (
-            <p className="text-sm text-red-400">{downloadError}</p>
+            <p className="text-sm text-rose-300">{downloadError}</p>
           )}
           {resumePreview ? (
-            <div className="overflow-hidden rounded-3xl border border-stone-300 bg-stone-50 shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
-              <div className="mx-auto max-w-3xl px-6 py-8 sm:px-10 sm:py-10 text-stone-900">
+            <div className="overflow-hidden rounded-[2rem] border border-[#d8e5ec] bg-[#f5f7f4] shadow-[0_30px_90px_rgba(0,0,0,0.32)]">
+              <div className="mx-auto max-w-3xl px-6 py-8 sm:px-10 sm:py-10 text-[#172129]">
                 {resumePreview.headerLines.length > 0 && (
-                  <header className="border-b border-stone-300 pb-5 text-center">
+                  <header className="border-b border-[#c9d7de] pb-5 text-center">
                     <h4
-                      className="text-3xl font-semibold tracking-[0.08em] text-stone-900"
-                      style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+                      className="text-3xl font-semibold tracking-[0.04em] text-[#132028]"
+                      style={{ fontFamily: 'var(--font-sora), sans-serif' }}
                     >
                       {resumePreview.headerLines[0]}
                     </h4>
                     {resumePreview.headerLines.slice(1).map((line) => (
-                      <p key={line} className="mt-2 text-sm text-stone-600">
+                      <p key={line} className="mt-2 text-sm text-[#61717b]">
                         {line}
                       </p>
                     ))}
@@ -456,12 +456,12 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
                   {resumePreview.sections.map((section) => (
                     <section key={section.heading}>
                       <div className="flex items-center gap-3">
-                        <h5 className="text-xs font-semibold tracking-[0.28em] text-stone-700">
+                        <h5 className="text-xs font-semibold tracking-[0.28em] text-[#47626f]">
                           {section.heading}
                         </h5>
-                        <div className="h-px flex-1 bg-stone-300" />
+                        <div className="h-px flex-1 bg-[#c9d7de]" />
                       </div>
-                      <div className="mt-3 space-y-2 text-[15px] leading-7 text-stone-800">
+                      <div className="mt-3 space-y-2 text-[15px] leading-7 text-[#22313a]">
                         {section.lines.map((line, index) => {
                           if (!line.trim()) {
                             return <div key={`${section.heading}-${index}`} className="h-2" />
@@ -474,7 +474,7 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
                                 key={`${section.heading}-${index}`}
                                 className="flex items-start gap-3"
                               >
-                                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-stone-500" />
+                                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[#4ea596]" />
                                 <p>{bulletMatch[1]}</p>
                               </div>
                             )
@@ -489,7 +489,7 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
               </div>
             </div>
           ) : (
-            <pre className="whitespace-pre-wrap text-sm leading-relaxed text-gray-100">
+            <pre className="whitespace-pre-wrap rounded-[1.5rem] border border-white/8 bg-[rgba(4,12,20,0.72)] p-5 text-sm leading-7 text-slate-100">
               {finalResume}
             </pre>
           )}
@@ -497,13 +497,13 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
       )}
 
       {coverLetter && (
-        <div className="mt-6 space-y-4 rounded-xl border border-gray-700 bg-gray-900 p-4 text-left">
+        <div className="mt-6 space-y-4 rounded-[1.75rem] border border-white/10 bg-[rgba(255,255,255,0.03)] p-5 text-left">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col sm:max-w-md">
               <h3 className="text-base font-semibold text-white sm:text-lg">
                 Tailored Cover Letter
               </h3>
-              <p className="text-xs text-gray-400 sm:text-sm">
+              <p className="text-xs text-slate-400 sm:text-sm">
                 Keyword-rich letter matched to the job description and ATS-safe.
               </p>
             </div>
@@ -511,7 +511,7 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
               <button
                 type="button"
                 onClick={handleCopyCoverLetter}
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-gray-600 px-4 py-2 text-sm font-medium text-white transition hover:border-gray-400"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-white/10 bg-white/6 px-4 py-2 text-sm font-medium text-white transition hover:border-[var(--accent)] hover:bg-[rgba(125,211,199,0.08)]"
               >
                 {coverCopied ? 'Copied!' : 'Copy Letter'}
               </button>
@@ -519,16 +519,16 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
                 type="button"
                 onClick={handleDownloadCoverLetter}
                 disabled={coverDownloading}
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:border-blue-400 disabled:opacity-60"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-emerald-300/20 bg-[rgba(125,211,199,0.12)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[rgba(125,211,199,0.2)] disabled:opacity-60"
               >
                 {coverDownloading ? 'Preparing PDF...' : 'Download PDF'}
               </button>
             </div>
           </div>
           {coverDownloadError && (
-            <p className="text-sm text-red-400">{coverDownloadError}</p>
+            <p className="text-sm text-rose-300">{coverDownloadError}</p>
           )}
-          <pre className="whitespace-pre-wrap text-sm leading-relaxed text-gray-100">
+          <pre className="whitespace-pre-wrap rounded-[1.5rem] border border-white/8 bg-[rgba(4,12,20,0.72)] p-5 text-sm leading-7 text-slate-100">
             {coverLetter}
           </pre>
         </div>
