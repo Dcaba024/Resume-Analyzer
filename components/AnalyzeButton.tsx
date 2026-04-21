@@ -306,16 +306,30 @@ export default function AnalyzeButton({ fullName }: AnalyzeButtonProps) {
 
   return (
     <div className="text-center">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] border border-white/10 bg-[rgba(255,255,255,0.03)] px-4 py-3 text-left">
+        <div>
+          <p className="text-xs uppercase tracking-[0.24em] text-[var(--accent)]">
+            Free Resume Review
+          </p>
+          <p className="mt-1 text-sm text-slate-300">
+            Get your score, recruiter-style feedback, and a matched download-ready resume.
+          </p>
+        </div>
+        <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
+          Usually under 30 seconds
+        </p>
+      </div>
+
       <button
         onClick={handleAnalyze}
         disabled={loading}
         className="w-full rounded-[1.4rem] border border-emerald-200/20 bg-[linear-gradient(135deg,#8be1d0_0%,#4cbeb0_48%,#2f7f95_100%)] px-6 py-4 text-sm font-semibold tracking-[0.08em] text-slate-950 uppercase shadow-[0_20px_60px_rgba(64,182,170,0.28)] transition duration-300 hover:translate-y-[-1px] hover:shadow-[0_26px_70px_rgba(64,182,170,0.36)] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading
-          ? `Analyzing${
+          ? `Analyzing My Resume${
               progress ? ` (${Math.min(progress, 99).toFixed(0)}%)` : '...'
             }`
-          : 'Analyze Resume'}
+          : 'Analyze My Resume (Free)'}
       </button>
 
       {(loading || progress > 0) && (

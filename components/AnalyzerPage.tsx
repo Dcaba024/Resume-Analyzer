@@ -31,23 +31,42 @@ export default async function AnalyzerPage() {
               ATS Resume Analyzer
             </p>
             <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">
-              Make your resume look sharper, read cleaner, and match better.
+              Get a resume score and targeted fixes in under 30 seconds.
             </h1>
             <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-              Upload your current resume, paste the target job description, and get
-              a polished rewrite, ATS match feedback, and a download-ready version
-              in one flow.
+              Upload your resume, paste the job description, and get recruiter-style
+              feedback, a clearer rewrite, and a download-ready version that matches
+              what you see on screen.
             </p>
             <div className="mt-8 flex flex-wrap gap-3 text-sm text-slate-200">
               <span className="rounded-full border border-white/10 bg-white/6 px-4 py-2">
-                Recruiter-style output
+                Get feedback like a recruiter
               </span>
               <span className="rounded-full border border-white/10 bg-white/6 px-4 py-2">
-                ATS-safe formatting
+                Resume score + fixes
               </span>
               <span className="rounded-full border border-white/10 bg-white/6 px-4 py-2">
-                PDF download
+                Same-text PDF download
               </span>
+            </div>
+            <div className="mt-8 grid gap-3 text-sm sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Used For</p>
+                <p className="mt-2 text-lg font-semibold text-white">Job seekers</p>
+                <p className="mt-1 text-slate-400">Built for faster resume review loops.</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Perspective</p>
+                <p className="mt-2 text-lg font-semibold text-white">Recruiter-style</p>
+                <p className="mt-1 text-slate-400">Feedback focused on clarity, fit, and keywords.</p>
+              </div>
+              <div className="rounded-2xl border border-emerald-300/18 bg-[rgba(125,211,199,0.08)] px-4 py-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-emerald-100/85">Trust Fix</p>
+                <p className="mt-2 text-lg font-semibold text-white">Output consistency fixed</p>
+                <p className="mt-1 text-slate-300">
+                  The displayed resume and downloaded file now use the same final text.
+                </p>
+              </div>
             </div>
           </header>
 
@@ -61,9 +80,9 @@ export default async function AnalyzerPage() {
             </div>
             <div className="rounded-[1.75rem] border border-white/10 bg-[var(--panel-strong)] p-5 backdrop-blur-xl">
               <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Output</p>
-              <p className="mt-3 text-2xl font-semibold text-white">Same-text download</p>
+              <p className="mt-3 text-2xl font-semibold text-white">Critical consistency fix</p>
               <p className="mt-2 text-sm leading-6 text-slate-400">
-                The on-screen resume and PDF now use one shared final version.
+                A trust-breaking mismatch between display and download was fixed so both outputs stay aligned.
               </p>
             </div>
             <div className="rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(125,211,199,0.18),rgba(8,20,31,0.88))] p-5 backdrop-blur-xl">
@@ -74,6 +93,44 @@ export default async function AnalyzerPage() {
               </p>
             </div>
           </aside>
+        </section>
+
+        <section className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr]">
+          <div className="rounded-[2rem] border border-white/10 bg-[var(--panel-strong)] p-6 backdrop-blur-xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[var(--accent)]">
+              Example Output
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold text-white">
+              See what users get before they upload anything.
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-7 text-slate-400">
+              Showing the output upfront makes the product easier to trust. This example
+              mirrors the kind of analysis, score change, and rewrite improvement the tool produces.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-[1.75rem] border border-white/10 bg-[rgba(255,255,255,0.03)] p-5">
+              <p className="text-xs uppercase tracking-[0.24em] text-rose-200/85">Before</p>
+              <p className="mt-3 text-lg font-semibold text-white">Resume says too little</p>
+              <div className="mt-4 space-y-3 text-sm leading-7 text-slate-400">
+                <p>Score: 46 / 100</p>
+                <p>Weak summary and generic bullets.</p>
+                <p>Missing job language around analytics, stakeholder reporting, and SQL.</p>
+                <p>Formatting feels flat and undersells relevant experience.</p>
+              </div>
+            </div>
+            <div className="rounded-[1.75rem] border border-emerald-300/16 bg-[linear-gradient(180deg,rgba(125,211,199,0.1),rgba(6,16,24,0.76))] p-5">
+              <p className="text-xs uppercase tracking-[0.24em] text-emerald-100/85">After</p>
+              <p className="mt-3 text-lg font-semibold text-white">Clearer, stronger, more targeted</p>
+              <div className="mt-4 space-y-3 text-sm leading-7 text-slate-200/85">
+                <p>Score: 72 / 100</p>
+                <p>Sharper summary tied to the target role.</p>
+                <p>Rewritten bullets surface reporting, dashboards, SQL, and measurable scope.</p>
+                <p>Preview and downloaded PDF match exactly.</p>
+              </div>
+            </div>
+          </div>
         </section>
 
         <div className="panel-sheen w-full space-y-8 rounded-[2rem] border border-white/10 bg-[var(--panel)] p-6 shadow-[0_28px_120px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-8">
